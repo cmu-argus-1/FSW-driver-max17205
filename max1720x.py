@@ -2,7 +2,8 @@ import time
 from adafruit_bus_device.i2c_device import I2CDevice
 
 
-MAX1720X_I2CADDR = 0x36
+MAX1720X_I2CADDR_WR = 0x0B
+MAX1720X_I2CADDR_RD = 0x36
 
 MAX1720X_STATUS_ADDR = 0x00  # Contains alert status and chip status
 MAX1720X_VCELL_ADDR = 0x09  # Lowest cell voltage of a pack
@@ -36,7 +37,8 @@ def unpack_signed_short_int(byte_list):
 
 class MAX17205():
     def __init__(self, i2c):
-        self.i2c_device = I2CDevice(i2c, MAX1720X_I2CADDR)
+        self.i2c_device = I2CDevice(i2c, MAX1720X_I2CADDR_RD)
+        self.i2c_device_cfg = I2CDevice(i2c, MAX1720X_I2CADDR_WR)
         self.rx_buffer = bytearray(2)
 
         self.voltage = 0.0
@@ -50,14 +52,16 @@ class MAX17205():
         self.ttf = 0
         self.time_pwrup = 0
 
-        with self.i2c_device as i2c:
-            # Write 2 bytes to MAX1720X_CFGPACK_ADDR
-            i2c.write(bytes([MAX1720X_CFGPACK_ADDR, 0x02, 0x00]))
+        # with self.i2c_device_cfg as i2c:
+        #     # Read 2 bytes from MAX1720X_CFGPACK_ADDR
+        #     i2c.write(bytes([MAX1720X_CFGPACK_ADDR, DATA_LOW, DATA_HIGH]))
 
     def read_cfg(self):
-        with self.i2c_device as i2c:
+        with self.i2c_device_cfg as i2c:
             # Read 2 bytes from MAX1720X_CFGPACK_ADDR
             i2c.write(bytes([MAX1720X_CFGPACK_ADDR]))
+
+        with self.i2c_device_cfg as i2c:
             i2c.readinto(self.rx_buffer)
 
         return self.rx_buffer
@@ -227,12 +231,12 @@ class MAX17205():
 
         :return: None
         """
-        with self.i2c_device as i2c:
-            # Write to MAX1720X_COMMAND_ADDR
-            i2c.write(bytes([MAX1720X_COMMAND_ADDR, 0x0F, 0x00]))
+        # with self.i2c_device as i2c:
+        #     # Write to MAX1720X_COMMAND_ADDR
+        #     i2c.write(bytes([MAX1720X_COMMAND_ADDR, 0x0F, 0x00]))
 
-        # Wait
-        time.sleep(50/1000)
+        # # Wait
+        # time.sleep(50/1000)
 
         with self.i2c_device as i2c:
             # Write to MAX1720X_CONFIG2_ADDR
